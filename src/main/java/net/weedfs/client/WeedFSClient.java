@@ -2,25 +2,24 @@ package net.weedfs.client;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.sql.Timestamp;
-import java.util.Date;
 
 import org.apache.http.HttpVersion;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntity;
-import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.AbstractContentBody;
+import org.apache.http.entity.mime.content.ByteArrayBody;
+import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.CoreProtocolPNames;
@@ -43,7 +42,6 @@ public class WeedFSClient implements FSClient {
     }
     
     public WeedAssignedInfo seedAssignFidRequest() {
-        
         WeedAssignedInfo assignedInfo = null;
         BufferedReader in = null;
         
@@ -78,44 +76,17 @@ public class WeedFSClient implements FSClient {
         return assignedInfo;
     }
     
+    @Override
+    public RequestResult upload(InputStream inputstream, String fid, String url,
+            String fileName, String mimeType) {
+        return uploadGeneral(inputstream, fid, url, fileName, mimeType);
+    }
+    
     
     @Override
-    public RequestResult upload(File inputFile, String fid, String url, String fileName,
+    public RequestResult upload(byte[] data, String fid, String url, String fileName,
             String mimeType) {
-        
-        RequestResult result = new RequestResult();
-        
-        FileBody fileBody = new FileBody(inputFile, mimeType);
-        HttpClient client = new DefaultHttpClient();
-        
-        client.getParams().setParameter(CoreProtocolPNames.PROTOCOL_VERSION,
-                HttpVersion.HTTP_1_1);
-        
-        HttpPost post = new HttpPost("http://" + url + "/" + fid);
-        
-        MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-        entity.addPart("fileBody", fileBody);
-        try {
-            entity.addPart("fileName", new StringBody(fileName));
-        }
-        catch (UnsupportedEncodingException e1) {
-            e1.printStackTrace();
-        }
-        post.setEntity(entity);
-        try {
-            // TODO: add more file options;
-            String response = EntityUtils.toString(client.execute(post).getEntity(),
-                    "UTF-8");
-            client.getConnectionManager().shutdown();
-            int size = Integer.parseInt(response.substring(8, response.length() - 1));
-            result.setFid(fid);
-            result.setSize(size);
-            result.setSuccess(true);
-            return result;
-        }
-        catch (Exception e) {
-            throw new RuntimeException(e.toString());
-        }
+        return uploadGeneral(data, fid, url, fileName, mimeType);
     }
     
     
@@ -126,7 +97,15 @@ public class WeedFSClient implements FSClient {
         }
         
         WeedAssignedInfo assignedInfo = seedAssignFidRequest();
-        return upload(inputFile, assignedInfo.getFid(), assignedInfo.getUrl(),
+        InputStream inStream = null;
+        try {
+           inStream = new FileInputStream(inputFile);
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e.toString());
+        }
+        
+        return upload(inStream, assignedInfo.getFid(), assignedInfo.getUrl(),
                 inputFile.getName(), "text/plain");
     }
     
@@ -327,9 +306,65 @@ public class WeedFSClient implements FSClient {
         
         // add request header
         con.setRequestProperty("User-Agent", "");
+        // for later 
         int responseCode = con.getResponseCode();
         
         return con.getInputStream();
     }
+    
+    
+    private RequestResult uploadGeneral(Object data, String fid, String url,
+            String fileName, String mimeType) {
+        
+        RequestResult result = new RequestResult();
+        
+        AbstractContentBody inputBody = null;
+        
+        try {
+            if (Class.forName("java.io.InputStream").isInstance(data)) {
+                inputBody = new InputStreamBody((InputStream) data,
+                        mimeType, fileName);
+            }
+            else {
+                inputBody = new ByteArrayBody((byte[]) data, mimeType,
+                        fileName);
+            }
+        }
+        catch (ClassNotFoundException e2) {
+            e2.printStackTrace();
+        }
+        
+        HttpClient client = new DefaultHttpClient();
+        
+        client.getParams().setParameter(CoreProtocolPNames.PROTOCOL_VERSION,
+                HttpVersion.HTTP_1_1);
+        
+        HttpPost post = new HttpPost("http://" + url + "/" + fid);
+        
+        MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
+        entity.addPart("fileBody", inputBody);
+        try {
+            entity.addPart("fileName", new StringBody(fileName));
+        }
+        catch (UnsupportedEncodingException e1) {
+            e1.printStackTrace();
+        }
+        post.setEntity(entity);
+        try {
+            // TODO: add more file options;
+            String response = EntityUtils.toString(client.execute(post).getEntity(),
+                    "UTF-8");
+            client.getConnectionManager().shutdown();
+            int size = Integer.parseInt(response.substring(8, response.length() - 1));
+            result.setFid(fid);
+            result.setSize(size);
+            result.setSuccess(true);
+            return result;
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e.toString());
+        }
+    }
+    
     
 }
