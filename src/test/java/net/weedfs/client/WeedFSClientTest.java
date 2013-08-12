@@ -13,8 +13,6 @@ import junit.framework.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import static org.junit.Assert.*;
-
 
 /*
  *  WeedFSClient test
@@ -35,7 +33,7 @@ public class WeedFSClientTest {
     @Test
     public void testRead() {
         // create File
-        int fileNum = 10;
+        int fileNum = 50;
         Random ran = new Random();
         
         File[] fileList = new File[fileNum];
@@ -71,21 +69,25 @@ public class WeedFSClientTest {
         RequestResult[] result = new RequestResult[fileNum];
         
         for (int i = 0; i < fileNum; i++) {
-            result[i] = client.write(fileList[i].getAbsolutePath());
+            File testFile = new File(fileList[i].getAbsolutePath());
+            result[i] = client.upload(testFile);
             Assert.assertTrue(result[i].isSuccess());
         }
         
-        // download files;
         
+        // download files;
         File[] verfiedFileList = new File[fileNum];
+        
+        BufferedReader rd1;
+        BufferedReader rd2;
+        
         try {
             for (int i = 0; i < fileNum; i++) {
                 verfiedFileList[i] = new File("./downloadFile" + i);
-                client.read(result[i].getFid(), verfiedFileList[i].getAbsolutePath());
+                client.download(result[i].getFid(), verfiedFileList[i].getAbsolutePath());
                 
-                BufferedReader rd1 = new BufferedReader(new FileReader(fileList[i]));
-                BufferedReader rd2 = new BufferedReader(
-                        new FileReader(verfiedFileList[i]));
+                rd1 = new BufferedReader(new FileReader(fileList[i]));
+                rd2 = new BufferedReader(new FileReader(verfiedFileList[i]));
                 
                 String temp1 = null;
                 String temp2 = null;
