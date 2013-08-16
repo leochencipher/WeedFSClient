@@ -12,9 +12,7 @@ public interface FSClient {
     
     public RequestResult upload(File inputFile);
     
-    RequestResult upload(byte[] data,  String fileName,
-            String mimeType);
+    RequestResult upload(byte[] data, String fileName, String mimeType);
     
-    RequestResult upload(InputStream inputstream, String fileName,
-            String mimeType);
+    RequestResult upload(InputStream inputstream, String fileName, String mimeType);
 }

@@ -77,18 +77,18 @@ public class WeedFSClient implements FSClient {
     }
     
     @Override
-    public RequestResult upload(InputStream inputstream,
-            String fileName, String mimeType) {
+    public RequestResult upload(InputStream inputstream, String fileName, String mimeType) {
         WeedAssignedInfo assignedInfo = seedAssignFidRequest();
-        return uploadGeneral(inputstream,  assignedInfo.getFid(), assignedInfo.getPublicUrl(), fileName, mimeType);
+        return uploadGeneral(inputstream, assignedInfo.getFid(),
+                assignedInfo.getPublicUrl(), fileName, mimeType);
     }
     
     
     @Override
-    public RequestResult upload(byte[] data, String fileName,
-            String mimeType) {
+    public RequestResult upload(byte[] data, String fileName, String mimeType) {
         WeedAssignedInfo assignedInfo = seedAssignFidRequest();
-        return uploadGeneral(data,  assignedInfo.getFid(), assignedInfo.getFid(), fileName, mimeType);
+        return uploadGeneral(data, assignedInfo.getFid(), assignedInfo.getFid(),
+                fileName, mimeType);
     }
     
     
@@ -106,8 +106,7 @@ public class WeedFSClient implements FSClient {
             throw new RuntimeException(e.toString());
         }
         
-        return upload(inStream,
-                inputFile.getName(), "text/plain");
+        return upload(inStream, inputFile.getName(), "text/plain");
     }
     
     
