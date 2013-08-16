@@ -77,18 +77,18 @@ public class WeedFSClient implements FSClient {
     }
     
     @Override
-    public RequestResult upload(InputStream inputstream, String url,
+    public RequestResult upload(InputStream inputstream,
             String fileName, String mimeType) {
         WeedAssignedInfo assignedInfo = seedAssignFidRequest();
-        return uploadGeneral(inputstream,  assignedInfo.getUrl(), url, fileName, mimeType);
+        return uploadGeneral(inputstream,  assignedInfo.getFid(), assignedInfo.getPublicUrl(), fileName, mimeType);
     }
     
     
     @Override
-    public RequestResult upload(byte[] data, String url, String fileName,
+    public RequestResult upload(byte[] data, String fileName,
             String mimeType) {
         WeedAssignedInfo assignedInfo = seedAssignFidRequest();
-        return uploadGeneral(data,  assignedInfo.getUrl(), url, fileName, mimeType);
+        return uploadGeneral(data,  assignedInfo.getFid(), assignedInfo.getFid(), fileName, mimeType);
     }
     
     
@@ -98,7 +98,6 @@ public class WeedFSClient implements FSClient {
             throw new IllegalArgumentException("File doesn't exist");
         }
         
-        WeedAssignedInfo assignedInfo = seedAssignFidRequest();
         InputStream inStream = null;
         try {
             inStream = new FileInputStream(inputFile);
@@ -107,7 +106,7 @@ public class WeedFSClient implements FSClient {
             throw new RuntimeException(e.toString());
         }
         
-        return upload(inStream, assignedInfo.getFid(), assignedInfo.getUrl(),
+        return upload(inStream,
                 inputFile.getName(), "text/plain");
     }
     
